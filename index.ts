@@ -37,6 +37,7 @@ interface Action {
 
 function getMentions() {
     return new Promise(res => {
+        console.log('getting actions');
         twitter.getTimeline("mentions_timeline", null,
             config.accessToken,
             config.accessSecret,
@@ -49,13 +50,14 @@ function getMentions() {
                         if (!actions.find(a => a.id === d.id_str)) {
                             let go: Action = {id: d.id_str, resolved: false};
                             let text = d.text.toLowerCase();
-                            if (text.indexOf('left')) {
+                            console.log(text);
+                            if (text.indexOf('left')>=0) {
                                 go.moveLeft = true;
-                            } else if (text.indexOf('right')) {
+                            } else if (text.indexOf('right')>=0) {
                                 go.moveRight = true;
-                            } else if (text.indexOf('rotate')) {
+                            } else if (text.indexOf('rotate')>=0) {
                                 go.rotate = true;
-                            } else if (text.indexOf('drop')) {
+                            } else if (text.indexOf('drop')>=0) {
                                 go.drop = true;
                             } else {
                                 continue;
@@ -73,17 +75,16 @@ function getMentions() {
 }
 
 setInterval(() => {
-    console.log('getting actions');
     getMentions();
 }, 30 * 1000);
 setInterval(() => {
-    console.log('ticking');
     getMentions().then(() => {
         processTick();
     })
 }, 60 * 1000 * 1);
-
+getMentions();
 function processTick() {
+    console.log('ticking');
     let unResolvedActions = actions.filter(a => !a.resolved);
     let moveRight = unResolvedActions.reduce((a, b) => a + (b.moveRight ? 1 : 0), 0);
     let moveLeft = unResolvedActions.reduce((a, b) => a + (b.moveLeft ? 1 : 0), 0);
