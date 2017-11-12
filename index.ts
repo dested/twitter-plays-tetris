@@ -16,7 +16,14 @@ if (fs.existsSync("game.json")) {
     gameCanvas.board.deserialize(data.board);
     actions = data.actions;
 }
-
+/*setInterval(() => {
+    console.clear();
+    gameCanvas.tick();
+    let output = gameCanvas.render(c);
+    fs.writeFileSync("game.json", JSON.stringify({board:gameCanvas.board.serialize(),actions:[]}));
+    process.stdout.write(output);
+}, 100);
+return;*/
 let instance = new GameInstance(gameCanvas);
 
 
@@ -51,13 +58,13 @@ function getMentions() {
                             let go: Action = {id: d.id_str, resolved: false};
                             let text = d.text.toLowerCase();
                             console.log(text);
-                            if (text.indexOf('left')>=0) {
+                            if (text.indexOf('left') >= 0) {
                                 go.moveLeft = true;
-                            } else if (text.indexOf('right')>=0) {
+                            } else if (text.indexOf('right') >= 0) {
                                 go.moveRight = true;
-                            } else if (text.indexOf('rotate')>=0) {
+                            } else if (text.indexOf('rotate') >= 0) {
                                 go.rotate = true;
-                            } else if (text.indexOf('drop')>=0) {
+                            } else if (text.indexOf('drop') >= 0) {
                                 go.drop = true;
                             } else {
                                 continue;
@@ -81,8 +88,9 @@ setInterval(() => {
     getMentions().then(() => {
         processTick();
     })
-}, 60 * 1000 * 1);
+}, 15 * 1000 * 1);
 getMentions();
+
 function processTick() {
     console.log('ticking');
     let unResolvedActions = actions.filter(a => !a.resolved);
@@ -117,7 +125,7 @@ function processTick() {
     let output = gameCanvas.render(c);
     process.stdout.write(output);
     twitter.statuses("update", {
-            status: output
+            status: "@ignore\r\n" + output
         },
         config.accessToken,
         config.accessSecret,

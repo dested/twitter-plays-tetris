@@ -206,7 +206,7 @@ export class GameCanvas {
 
     public render(c: Canvas): string {
         c.clear();
-        for (let x = 0; x < c.width; x += 2) {
+        for (let x = 0; x < (this.boardWidth + 2) * this.blockSize; x += 2) {
             for (let y = 0; y < c.height; y += 4) {
                 c.set(x, y);
             }
@@ -266,12 +266,15 @@ export class GameCanvas {
                             c.set((this.boardWidth + offset) * this.blockSize + (x) * this.blockSize + w, this.blockSize * 2 + (y) * this.blockSize + h)
                         }
                     }
+                }else{
+                    c.set((this.boardWidth + offset) * this.blockSize + (x) * this.blockSize , this.blockSize * 2 + (y) * this.blockSize )
+
                 }
             }
         }
 
 
-        return c.frame();
+        return c.frame().replace(/⠀/g,' ');
     }
 }
 

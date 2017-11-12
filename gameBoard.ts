@@ -24,6 +24,7 @@ export class GameBoard {
             slotIndexes: this.slotIndexes,
             slots: this.slots.map(a => a.map(b => !!b)),
             currentPosition: this.currentPosition,
+            currentSlot: this.currentPiece.currentSlot
         }
     }
 
@@ -32,16 +33,18 @@ export class GameBoard {
         slotIndexes: number[],
         slots: boolean[][],
         currentPosition: { x: number, y: number },
+        currentSlot: number
     }) {
         this.bagPiece = data.bagPiece;
         this.slotIndexes = data.slotIndexes;
         this.slots = data.slots.map(a => a.map(b => b ? new GameSlot('black') : null))
-        this.currentPosition=data.currentPosition;
+        this.currentPosition = data.currentPosition;
         for (let i = 0; i < this.slotIndexes.length; i++) {
             let ind = this.slotIndexes[i];
             this.currentPieces[i] = GamePiece.pieces[this.slotIndexes[ind]];
             this.currentPieces[i].currentSlot = 0;
         }
+        this.currentPiece.currentSlot = data.currentSlot;
     }
 
     public nextPiece() {
