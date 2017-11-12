@@ -1,0 +1,25 @@
+{
+  "name": "twitter-plays-tetris",
+  "version": "1.0.0",
+  "description": "twitter-plays-tetris",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dested/twitter-plays-tetris.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dested/twitter-plays-tetris/issues"
+  },
+  "homepage": "https://github.com/dested/twitter-plays-tetris#readme",
+  "devDependencies": {
+    "@types/node": "^8.0.51"
+  },
+  "dependencies": {
+    "node-twitter-api": "^1.8.0"
+  }
+}

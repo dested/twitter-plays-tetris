@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "removeComments": false,
+    "noEmitOnError": false,
+    "experimentalDecorators": true,
+    "strict": true,
+    "target": "es5",
+    "strictNullChecks": false,
+    "allowSyntheticDefaultImports": true,
+    "outDir":"./dist/",
+    "lib": ["dom","es2015"]
+  }
+}
