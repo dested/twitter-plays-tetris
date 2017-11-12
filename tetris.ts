@@ -274,7 +274,7 @@ export class GameCanvas {
         }
 
 
-        return c.frame().replace(/⠀/g,' ');
+        return c.frame().replace(/⠀/g,'');
     }
 }
 

@@ -88,7 +88,7 @@ setInterval(() => {
     getMentions().then(() => {
         processTick();
     })
-}, 15 * 1000 * 1);
+}, 5 * 1000 * 1);
 getMentions();
 
 function processTick() {
@@ -120,12 +120,14 @@ function processTick() {
     for (let i = 0; i < unResolvedActions.length; i++) {
         unResolvedActions[i].resolved = true;
     }
+    let counts=`L=${moveLeft} R=${moveRight} ROT=${rotate} D=${drop}`;
 
     gameCanvas.tick();
     let output = gameCanvas.render(c);
-    process.stdout.write(output);
+    let status = "@ignore\r\n" + output+"\r\n"+counts;
+    process.stdout.write(status);
     twitter.statuses("update", {
-            status: "@ignore\r\n" + output
+            status: status
         },
         config.accessToken,
         config.accessSecret,
