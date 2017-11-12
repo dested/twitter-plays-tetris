@@ -9,7 +9,7 @@ export class GameCanvas {
     public boardHeight = 18;
     public board: GameBoard;
 
-    constructor() {
+    constructor(private callbacks: { gameOver: () => void, clearLine: (numCleared: number) => void }) {
         this.reset();
     }
 
@@ -72,6 +72,9 @@ export class GameCanvas {
     }
 
     private reset() {
+        if (this.board) {
+            this.callbacks.gameOver();
+        }
         this.board = new GameBoard();
         this.newPiece(false);
     }
@@ -158,6 +161,7 @@ export class GameCanvas {
 
     public newPiece(swap: boolean) {
 
+        let startLineClear = this.board.linesCleared;
         for (let y = this.boardHeight - 1; y >= 0; y--) {
             let bad = false;
             for (let x = 0; x < this.boardWidth; x++) {
@@ -171,11 +175,13 @@ export class GameCanvas {
                 for (let _y = y; _y > 0; _y--) {
                     for (let x = 0; x < this.boardWidth; x++) {
                         this.board.slots[x][_y] = this.board.slots[x][_y - 1];
-
                     }
                 }
                 y++;
             }
+        }
+        if (this.board.linesCleared != startLineClear) {
+            this.callbacks.clearLine(this.board.linesCleared - startLineClear);
         }
 
         if (swap) {
@@ -263,7 +269,7 @@ export class GameCanvas {
                     piece[x][y]) {
                     on = true;
                 }
-                if(x===0){
+                if (x === 0) {
                     c.set((this.boardWidth + offset) * this.blockSize + (x) * this.blockSize, this.blockSize * 2 + (y) * this.blockSize)
                 }
                 if (on) {

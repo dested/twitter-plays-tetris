@@ -7,15 +7,41 @@ const twitterAPI = require('node-twitter-api');
 const fs = require('fs');
 
 const c = new Canvas(30, 36);
-let gameCanvas = new GameCanvas();
+let gameCanvas = new GameCanvas({
+        clearLine: (count) => {
+            let output = gameCanvas.render(c);
+            let status = `${count} Lines Cleared! \r\n${output}` ;
+            process.stdout.write(status);
+            twitter.statuses("update", {
+                    status: status
+                },
+                config.accessToken,
+                config.accessSecret,
+                (error: string, data: string) => {
+                    if (error) {
+                        console.error(error);
+                    } else {
+                        console.log('sent tweet');
+                    }
+                }
+            );
+        },
+        gameOver: () => {
+            fs.writeFileSync(`game-${+new Date()}.json`, JSON.stringify({actions: actions, iteration: iteration, board: gameCanvas.board.serialize()}));
+        }
+    })
+;
 let actions: Action[] = [];
-
+let iteration = 0;
 
 if (fs.existsSync("game.json")) {
     let data = JSON.parse(fs.readFileSync("game.json", 'utf8'));
     gameCanvas.board.deserialize(data.board);
     actions = data.actions;
+    iteration = data.iteration;
 }
+let output = gameCanvas.render(c);
+process.stdout.write(output);
 /*setInterval(() => {
     console.clear();
     gameCanvas.tick();
@@ -38,7 +64,8 @@ interface Action {
     moveLeft?: boolean,
     moveRight?: boolean,
     rotate?: boolean,
-    drop?: boolean
+    drop?: boolean,
+    iteration: number
 }
 
 
@@ -55,7 +82,7 @@ function getMentions() {
                     for (let i = 0; i < data.length; i++) {
                         let d = data[i];
                         if (!actions.find(a => a.id === d.id_str)) {
-                            let go: Action = {id: d.id_str, resolved: false};
+                            let go: Action = {id: d.id_str, resolved: false, iteration: iteration};
                             let text = d.text.toLowerCase();
                             console.log(text);
                             if (text.indexOf('left') >= 0) {
@@ -73,7 +100,7 @@ function getMentions() {
                             actions.push(go);
                         }
                     }
-                    fs.writeFileSync("game.json", JSON.stringify({actions: actions, board: gameCanvas.board.serialize()}));
+                    fs.writeFileSync("game.json", JSON.stringify({actions: actions, iteration: iteration, board: gameCanvas.board.serialize()}));
                 }
                 res();
             }
@@ -88,12 +115,29 @@ setInterval(() => {
     getMentions().then(() => {
         processTick();
     })
-}, 60 * 1000 * 1);
+}, 60 * 1000 * 3);
 getMentions();
 
 function processTick() {
     console.log('ticking');
     let unResolvedActions = actions.filter(a => !a.resolved);
+
+    if (unResolvedActions.length === 0) {
+        let rand = Math.random() * 4;
+        if (rand < 1) {
+            actions.push({moveLeft: true, id: 'random', resolved: false, iteration: iteration})
+            ''
+        } else if (rand < 2) {
+            actions.push({moveRight: true, id: 'random', resolved: false, iteration: iteration})
+            ''
+        } else if (rand < 3) {
+            actions.push({rotate: true, id: 'random', resolved: false, iteration: iteration})
+            ''
+        }
+        unResolvedActions = actions.filter(a => !a.resolved);
+    }
+
+
     let moveRight = unResolvedActions.reduce((a, b) => a + (b.moveRight ? 1 : 0), 0);
     let moveLeft = unResolvedActions.reduce((a, b) => a + (b.moveLeft ? 1 : 0), 0);
     let rotate = unResolvedActions.reduce((a, b) => a + (b.rotate ? 1 : 0), 0);
@@ -117,14 +161,15 @@ function processTick() {
         console.log('rotate');
     }
 
+
     for (let i = 0; i < unResolvedActions.length; i++) {
         unResolvedActions[i].resolved = true;
     }
-    let counts=`L=${moveLeft} R=${moveRight} ROT=${rotate} D=${drop}\r\nLines=${gameCanvas.board.linesCleared}`;
+    let counts = `L=${moveLeft} R=${moveRight} ROT=${rotate} D=${drop}\r\nLines=${gameCanvas.board.linesCleared}`;
 
     gameCanvas.tick();
     let output = gameCanvas.render(c);
-    let status = "@TetIgnore\r\n" + output+""+counts;
+    let status = "@TetIgnore\r\n" + output + "" + counts;
     process.stdout.write(status);
     twitter.statuses("update", {
             status: status
@@ -139,6 +184,7 @@ function processTick() {
             }
         }
     );
+    fs.writeFileSync("game.json", JSON.stringify({actions: actions, iteration: ++iteration, board: gameCanvas.board.serialize()}));
 }
 
 //https://twitter.com/TwtPlayTetris
