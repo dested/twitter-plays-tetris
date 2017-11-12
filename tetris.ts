@@ -1,55 +1,17 @@
 import {Canvas} from "./canvas";
+import {GamePiece, GameSlot, IGamePiece} from "./gamePiece";
+import {GameBoard} from "./gameBoard";
 
 export class GameCanvas {
 
     private blockSize = 2;
     public boardWidth = 10;
-    public boardHeight = 20;
+    public boardHeight = 18;
     public board: GameBoard;
-    private slotIndexes: number[] = [0, 1, 2, 3, 4, 5, 6];
 
     constructor() {
         this.reset();
-
-        /*        require(['libs/keyboard.js'], (keyboardJS) => {
-                    var leftDown = false;
-                    var rightDown = false;
-                    var downDown = false;
-                    var upDown = false;
-                    var enterDown = false;
-
-                    keyboardJS.bind('left', (e) => {
-                        if (leftDown)return;
-                        leftDown = true;
-                        this.moveLeft();
-                    }, (e) => leftDown = false);
-
-                    keyboardJS.bind('right', (e) => {
-                        if (rightDown)return;
-                        rightDown = true;
-                        this.moveRight();
-                    }, (e) => rightDown = false);
-
-                    keyboardJS.bind('enter', (e) => {
-                        if (downDown)return;
-                        downDown = true;
-                        this.newPiece(true);
-                    }, (e) => downDown = false);
-
-                    keyboardJS.bind('down', (e) => {
-                        if (upDown)return;
-                        upDown = true;
-                        this.moveDown();
-                    }, (e) => upDown = false);
-                    keyboardJS.bind('up', (e) => {
-                        if (enterDown)return;
-                        enterDown = true;
-                        this.rotate();
-                    }, (e) => enterDown = false);
-                })*/
-        ;
-
-     }
+    }
 
     public rotate() {
         let origSlot = this.board.currentPiece.currentSlot;
@@ -220,7 +182,7 @@ export class GameCanvas {
                 [this.board.currentPiece, this.board.swapPiece] = [this.board.swapPiece, this.board.currentPiece];
             } else {
                 this.board.swapPiece = this.board.currentPiece;
-                this.nextPiece();
+                this.board.nextPiece();
             }
 
             this.board.currentPosition.x = 5;
@@ -231,7 +193,7 @@ export class GameCanvas {
 
 
         } else {
-            this.nextPiece();
+            this.board.nextPiece();
 
             this.board.currentPosition.x = 5;
             this.board.currentPosition.y = this.board.currentPiece.slot.length - 1;
@@ -241,45 +203,31 @@ export class GameCanvas {
         }
     }
 
-    private nextPiece() {
-        this.board.bagPiece++;
-        if (this.board.bagPiece === 7) {
-            this.board.bagPiece = 0;
-            this.slotIndexes.sort((a, b) => Math.random() * 100 - 50);
-            for (let i = 0; i < this.slotIndexes.length; i++) {
-                let ind = this.slotIndexes[i];
-                this.board.currentPieces[i] = GamePiece.pieces[this.slotIndexes[ind]];
-                this.board.currentPieces[i].currentSlot = 0;
-            }
-        }
-    }
 
     public render(c: Canvas): string {
         c.clear();
-        for (let x = 0; x < 32; x += 2) {
-            for (let y = 0; y < 64; y += 4) {
+        for (let x = 0; x < c.width; x += 2) {
+            for (let y = 0; y < c.height; y += 4) {
                 c.set(x, y);
             }
         }
 
-        for (let y = -1; y < this.boardHeight + 1; y++) {
+        for (let y = 0; y < this.boardHeight; y++) {
             for (let x = -1; x < this.boardWidth + 1; x++) {
                 let drawBlock = false;
                 let on: boolean;
-                if (x === -1 || x === this.boardWidth || y === -1 || y === this.boardHeight) {
-                    on = true;
+                if (x === -1 || x === this.boardWidth) {
+                    on = false;
                     drawBlock = true;
                 } else {
-                    let slot: GameSlot;
-                    if (this.board.slots[x] && (slot = this.board.slots[x][y])) {
+                    if (this.board.slots[x] && this.board.slots[x][y]) {
                         on = true;
                         drawBlock = true;
                     }
 
                     if (this.board.currentPiece) {
-                        if (this.board.currentPiece.slot[this.board.currentPosition.x - x] &&
-                            this.board.currentPiece.slot[this.board.currentPosition.x - x][this.board.currentPosition.y - y]) {
-                            slot = this.board.currentPiece.gameSlot;
+                        if (this.board.getPiece(0).slot[this.board.currentPosition.x - x] &&
+                            this.board.getPiece(0).slot[this.board.currentPosition.x - x][this.board.currentPosition.y - y]) {
                             on = true;
                             drawBlock = true;
                         }
@@ -288,238 +236,45 @@ export class GameCanvas {
 
                 if (drawBlock) {
                     if (!on) {
-                        c.set((x + 1) * this.blockSize, (y + 1) * this.blockSize);
-                        c.set((x + 1) * this.blockSize + 1, (y + 1) * this.blockSize);
-                        c.set((x + 1) * this.blockSize, (y + 1) * this.blockSize + 1);
-                        c.set((x + 1) * this.blockSize + 1, (y + 1) * this.blockSize + 1);
+                        c.set((x + 1) * this.blockSize, (y) * this.blockSize);
+                        c.set((x + 1) * this.blockSize + 1, (y) * this.blockSize);
+                        c.set((x + 1) * this.blockSize, (y) * this.blockSize + 1);
+                        c.set((x + 1) * this.blockSize + 1, (y) * this.blockSize + 1);
                     }
                     else {
                         for (let w = 0; w < this.blockSize; w++) {
                             for (let h = 0; h < this.blockSize; h++) {
-                                c.set((x + 1) * this.blockSize + w, (y + 1) * this.blockSize + h)
+                                c.set((x + 1) * this.blockSize + w, (y) * this.blockSize + h)
                             }
                         }
                     }
                 }
             }
         }
+        let piece = this.board.getPiece(1).slots[1];
+        let offset = this.board.getPiece(1).color === '#FFE97F' ? 3 : 2;
+        for (let y = 0; y < 4; y++) {
+            for (let x = 0; x < 4; x++) {
+                let on = false;
+                if (piece[x] &&
+                    piece[x][y]) {
+                    on = true;
+                }
+                if (on) {
+                    for (let w = 0; w < this.blockSize; w++) {
+                        for (let h = 0; h < this.blockSize; h++) {
+                            c.set((this.boardWidth + offset) * this.blockSize + (x) * this.blockSize + w, this.blockSize * 2 + (y) * this.blockSize + h)
+                        }
+                    }
+                }
+            }
+        }
+
+
         return c.frame();
     }
 }
 
-export class GameBoard {
-    bagPiece: number = 6;
-    swapPiece: GamePiece;
-
-    constructor() {
-        this.slots = [];
-        for (let x = 0; x < 10; x++) {
-            this.slots[x] = [];
-            for (let y = 0; y < 22; y++) {
-                this.slots[x][y] = null;
-            }
-        }
-    }
-
-    slots: GameSlot[][];
-    currentPieces: GamePiece[] = [];
-
-    get currentPiece(): GamePiece {
-        return this.currentPieces[this.bagPiece];
-    }
-
-    set currentPiece(value: GamePiece) {
-        this.currentPieces[this.bagPiece] = value;
-    }
-
-    currentPosition: { x: number, y: number } = {x: 0, y: 0};
-}
-
-export class GameSlot {
-    constructor(public color: string) {
-    }
-}
-
-export class GamePiece implements IGamePiece {
-
-    static pieces: GamePiece[] = [
-        new GamePiece(new GameSlot('#FFD800'), [//orange L
-            GamePiece.flip([
-                [!!0, !!0, !!1],
-                [!!1, !!1, !!1],
-                [!!0, !!0, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!1, !!0],
-                [!!0, !!1, !!0],
-                [!!0, !!1, !!1],
-            ]), GamePiece.flip([
-                [!!0, !!0, !!0],
-                [!!1, !!1, !!1],
-                [!!1, !!0, !!0],
-            ]), GamePiece.flip([
-                [!!1, !!1, !!0],
-                [!!0, !!1, !!0],
-                [!!0, !!1, !!0],
-            ])
-        ]),
-        new GamePiece(new GameSlot('#0026FF'), [//blue L
-            GamePiece.flip([
-                [!!1, !!0, !!0],
-                [!!1, !!1, !!1],
-                [!!0, !!0, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!1, !!1],
-                [!!0, !!1, !!0],
-                [!!0, !!1, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!0, !!0],
-                [!!1, !!1, !!1],
-                [!!0, !!0, !!1],
-            ]), GamePiece.flip([
-                [!!0, !!1, !!0],
-                [!!0, !!1, !!0],
-                [!!1, !!1, !!0],
-            ])
-        ]),
-        new GamePiece(new GameSlot('#FFE97F'), [//yellow square
-            ([
-                [!!0, !!1, !!1, !!0],
-                [!!0, !!1, !!1, !!0],
-                [!!0, !!0, !!0, !!0]
-            ]), ([
-                [!!0, !!1, !!1, !!0],
-                [!!0, !!1, !!1, !!0],
-                [!!0, !!0, !!0, !!0]
-            ]), ([
-                [!!0, !!1, !!1, !!0],
-                [!!0, !!1, !!1, !!0],
-                [!!0, !!0, !!0, !!0]
-            ]), ([
-                [!!0, !!1, !!1, !!0],
-                [!!0, !!1, !!1, !!0],
-                [!!0, !!0, !!0, !!0]
-            ])
-        ]),
-        new GamePiece(new GameSlot('#00FF21'), [//green s
-            GamePiece.flip([
-                [!!0, !!1, !!1],
-                [!!1, !!1, !!0],
-                [!!0, !!0, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!1, !!0],
-                [!!0, !!1, !!1],
-                [!!0, !!0, !!1],
-            ]), GamePiece.flip([
-                [!!0, !!0, !!0],
-                [!!0, !!1, !!1],
-                [!!1, !!1, !!0],
-            ]), GamePiece.flip([
-                [!!1, !!0, !!0],
-                [!!1, !!1, !!0],
-                [!!0, !!1, !!0],
-            ])
-        ]),
-        new GamePiece(new GameSlot('#FF0000'), [//red s
-            GamePiece.flip([
-                [!!1, !!1, !!0],
-                [!!0, !!1, !!1],
-                [!!0, !!0, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!0, !!1],
-                [!!0, !!1, !!1],
-                [!!0, !!1, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!0, !!0],
-                [!!1, !!1, !!0],
-                [!!0, !!1, !!1],
-            ]), GamePiece.flip([
-                [!!1, !!0, !!0],
-                [!!1, !!1, !!0],
-                [!!0, !!1, !!0],
-            ])
-        ]),
-        new GamePiece(new GameSlot('#00FFFF'), [//cyan l
-            GamePiece.flip([
-                [!!0, !!0, !!0, !!0],
-                [!!1, !!1, !!1, !!1],
-                [!!0, !!0, !!0, !!0],
-                [!!0, !!0, !!0, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!0, !!1, !!0],
-                [!!0, !!0, !!1, !!0],
-                [!!0, !!0, !!1, !!0],
-                [!!0, !!0, !!1, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!0, !!0, !!0],
-                [!!0, !!0, !!0, !!0],
-                [!!1, !!1, !!1, !!1],
-                [!!0, !!0, !!0, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!1, !!0, !!0],
-                [!!0, !!1, !!0, !!0],
-                [!!0, !!1, !!0, !!0],
-                [!!0, !!1, !!0, !!0],
-            ])
-        ])
-        ,
-        new GamePiece(new GameSlot('#B200FF'), [//purple t
-            GamePiece.flip([
-                [!!0, !!1, !!0],
-                [!!1, !!1, !!1],
-                [!!0, !!0, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!1, !!0],
-                [!!0, !!1, !!1],
-                [!!0, !!1, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!0, !!0],
-                [!!1, !!1, !!1],
-                [!!0, !!1, !!0],
-            ]), GamePiece.flip([
-                [!!0, !!1, !!0],
-                [!!1, !!1, !!0],
-                [!!0, !!1, !!0],
-            ])
-        ])
-
-    ];
-
-    private static flip(box: boolean[][]): boolean[][] {
-        var bbox: boolean[][] = [];
-        for (var x = 0; x < box.length; x++) {
-            bbox[x] = [];
-        }
-
-        for (var x = 0; x < box.length; x++) {
-            for (var y = 0; y < box[x].length; y++) {
-                bbox[x][y] = box[y][x];
-            }
-        }
-        return bbox;
-
-    }
-
-    public currentSlot: number = 0;
-
-    constructor(public gameSlot: GameSlot, public slots: boolean[][][]) {
-    }
-
-    public get slot(): boolean[][] {
-        return this.slots[this.currentSlot];
-    }
-
-    public set slot(piece: boolean[][]) {
-        throw new Error("Cannot set slot.");
-    }
-
-    public get color(): string {
-        return this.gameSlot.color;
-    }
-
-    public set color(color: string) {
-        throw new Error("Cannot set color.");
-    }
-}
 
 export class GameInstance implements IGameInstance {
     get boardHeight(): number {
@@ -556,7 +311,7 @@ export class GameInstance implements IGameInstance {
     }
 
     getPiece(index: number): IGamePiece {
-        return this.gameCanvas.board.currentPieces[this.gameCanvas.board.bagPiece + index];
+        return this.gameCanvas.board.getPiece(index);
     }
 
     getCurrentPiece(): IGamePiece {
@@ -658,11 +413,6 @@ interface IGameInstance {
     boardHeight: number;
     boardWidth: number;
 
-}
-
-interface IGamePiece {
-    slot: boolean[][];
-    color: string;
 }
 
 declare enum PieceRotation {

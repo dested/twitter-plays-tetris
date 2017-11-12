@@ -4,11 +4,21 @@ import config from "./config";
 
 
 const twitterAPI = require('node-twitter-api');
+const fs = require('fs');
 
-const c = new Canvas(24, 44);
+const c = new Canvas(30, 36);
 let gameCanvas = new GameCanvas();
+let actions: Action[] = [];
+
+
+if (fs.existsSync("game.json")) {
+    let data = JSON.parse(fs.readFileSync("game.json", 'utf8'));
+    gameCanvas.board.deserialize(data.board);
+    actions = data.actions;
+}
 
 let instance = new GameInstance(gameCanvas);
+
 
 const twitter = new twitterAPI({
     consumerKey: config.consumerKey,
@@ -24,56 +34,61 @@ interface Action {
     drop?: boolean
 }
 
-let mentions: Action[] = [];
 
 function getMentions() {
-    twitter.getTimeline("mentions_timeline", null,
-        config.accessToken,
-        config.accessSecret,
-        (error: string, data: { id_str: string, text: string }[]) => {
-            if (error) {
-                console.error(error);
-            } else {
-                for (let i = 0; i < data.length; i++) {
-                    let d = data[i];
-                    if (!mentions.find(a => a.id === d.id_str)) {
-                        let go: Action = {id: d.id_str, resolved: false};
-                        let text = d.text.toLowerCase();
-                        if (text.indexOf('left')) {
-                            go.moveLeft = true;
-                        } else if (text.indexOf('right')) {
-                            go.moveRight = true;
-                        } else if (text.indexOf('rotate')) {
-                            go.rotate = true;
-                        } else if (text.indexOf('drop')) {
-                            go.drop = true;
-                        } else {
-                            continue;
+    return new Promise(res => {
+        twitter.getTimeline("mentions_timeline", null,
+            config.accessToken,
+            config.accessSecret,
+            (error: string, data: { id_str: string, text: string }[]) => {
+                if (error) {
+                    console.error(error);
+                } else {
+                    for (let i = 0; i < data.length; i++) {
+                        let d = data[i];
+                        if (!actions.find(a => a.id === d.id_str)) {
+                            let go: Action = {id: d.id_str, resolved: false};
+                            let text = d.text.toLowerCase();
+                            if (text.indexOf('left')) {
+                                go.moveLeft = true;
+                            } else if (text.indexOf('right')) {
+                                go.moveRight = true;
+                            } else if (text.indexOf('rotate')) {
+                                go.rotate = true;
+                            } else if (text.indexOf('drop')) {
+                                go.drop = true;
+                            } else {
+                                continue;
+                            }
+                            console.log('adding action ', go);
+                            actions.push(go);
                         }
-                        console.log('adding action ', go);
-                        mentions.push(go);
                     }
+                    fs.writeFileSync("game.json", JSON.stringify({actions: actions, board: gameCanvas.board.serialize()}));
                 }
+                res();
             }
-        }
-    );
+        );
+    })
 }
 
 setInterval(() => {
-    console.log('getting mentions');
+    console.log('getting actions');
     getMentions();
 }, 30 * 1000);
 setInterval(() => {
     console.log('ticking');
-    processTick();
-}, 60 * 1000 * 5);
+    getMentions().then(() => {
+        processTick();
+    })
+}, 60 * 1000 * 1);
 
 function processTick() {
-    let actions = mentions.filter(a => !a.resolved);
-    let moveRight = actions.reduce((a, b) => a + (b.moveRight ? 1 : 0), 0);
-    let moveLeft = actions.reduce((a, b) => a + (b.moveLeft ? 1 : 0), 0);
-    let rotate = actions.reduce((a, b) => a + (b.rotate ? 1 : 0), 0);
-    let drop = actions.reduce((a, b) => a + (b.drop ? 1 : 0), 0);
+    let unResolvedActions = actions.filter(a => !a.resolved);
+    let moveRight = unResolvedActions.reduce((a, b) => a + (b.moveRight ? 1 : 0), 0);
+    let moveLeft = unResolvedActions.reduce((a, b) => a + (b.moveLeft ? 1 : 0), 0);
+    let rotate = unResolvedActions.reduce((a, b) => a + (b.rotate ? 1 : 0), 0);
+    let drop = unResolvedActions.reduce((a, b) => a + (b.drop ? 1 : 0), 0);
 
 
     if (moveLeft > moveRight && moveLeft > drop && moveLeft > rotate) {
@@ -93,11 +108,10 @@ function processTick() {
         console.log('rotate');
     }
 
-    for (let i = 0; i < mentions.length; i++) {
-        mentions[i].resolved = true;
+    for (let i = 0; i < unResolvedActions.length; i++) {
+        unResolvedActions[i].resolved = true;
     }
 
-    console.clear();
     gameCanvas.tick();
     let output = gameCanvas.render(c);
     process.stdout.write(output);
@@ -110,7 +124,7 @@ function processTick() {
             if (error) {
                 console.error(error);
             } else {
-                console.log(data);
+                console.log('sent tweet');
             }
         }
     );
