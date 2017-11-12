@@ -167,9 +167,11 @@ export class GameCanvas {
                 }
             }
             if (!bad) {
+                this.board.linesCleared++;
                 for (let _y = y; _y > 0; _y--) {
                     for (let x = 0; x < this.boardWidth; x++) {
                         this.board.slots[x][_y] = this.board.slots[x][_y - 1];
+
                     }
                 }
                 y++;
@@ -251,6 +253,7 @@ export class GameCanvas {
                 }
             }
         }
+
         let piece = this.board.getPiece(1).slots[1];
         let offset = this.board.getPiece(1).color === '#FFE97F' ? 3 : 2;
         for (let y = 0; y < 4; y++) {
@@ -260,21 +263,21 @@ export class GameCanvas {
                     piece[x][y]) {
                     on = true;
                 }
+                if(x===0){
+                    c.set((this.boardWidth + offset) * this.blockSize + (x) * this.blockSize, this.blockSize * 2 + (y) * this.blockSize)
+                }
                 if (on) {
                     for (let w = 0; w < this.blockSize; w++) {
                         for (let h = 0; h < this.blockSize; h++) {
                             c.set((this.boardWidth + offset) * this.blockSize + (x) * this.blockSize + w, this.blockSize * 2 + (y) * this.blockSize + h)
                         }
                     }
-                }else{
-                    c.set((this.boardWidth + offset) * this.blockSize + (x) * this.blockSize , this.blockSize * 2 + (y) * this.blockSize )
-
                 }
             }
         }
 
 
-        return c.frame().replace(/⠀/g,'');
+        return c.frame().replace(/⠀/g, '');
     }
 }
 

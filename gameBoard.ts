@@ -4,6 +4,7 @@ export class GameBoard {
     bagPiece: number = 6;
     swapPiece: GamePiece;
     private slotIndexes: number[] = [0, 1, 2, 3, 4, 5, 6];
+    linesCleared: number = 0;
 
     constructor() {
         this.slots = [];
@@ -24,7 +25,8 @@ export class GameBoard {
             slotIndexes: this.slotIndexes,
             slots: this.slots.map(a => a.map(b => !!b)),
             currentPosition: this.currentPosition,
-            currentSlot: this.currentPiece.currentSlot
+            currentSlot: this.currentPiece.currentSlot,
+            linesCleared: this.linesCleared
         }
     }
 
@@ -33,9 +35,11 @@ export class GameBoard {
         slotIndexes: number[],
         slots: boolean[][],
         currentPosition: { x: number, y: number },
-        currentSlot: number
+        currentSlot: number,
+        linesCleared: number
     }) {
         this.bagPiece = data.bagPiece;
+        this.linesCleared = data.linesCleared;
         this.slotIndexes = data.slotIndexes;
         this.slots = data.slots.map(a => a.map(b => b ? new GameSlot('black') : null))
         this.currentPosition = data.currentPosition;

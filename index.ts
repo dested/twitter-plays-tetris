@@ -88,7 +88,7 @@ setInterval(() => {
     getMentions().then(() => {
         processTick();
     })
-}, 5 * 1000 * 1);
+}, 60 * 1000 * 1);
 getMentions();
 
 function processTick() {
@@ -120,11 +120,11 @@ function processTick() {
     for (let i = 0; i < unResolvedActions.length; i++) {
         unResolvedActions[i].resolved = true;
     }
-    let counts=`L=${moveLeft} R=${moveRight} ROT=${rotate} D=${drop}`;
+    let counts=`L=${moveLeft} R=${moveRight} ROT=${rotate} D=${drop}\r\nLines=${gameCanvas.board.linesCleared}`;
 
     gameCanvas.tick();
     let output = gameCanvas.render(c);
-    let status = "@ignore\r\n" + output+"\r\n"+counts;
+    let status = "@TetIgnore\r\n" + output+""+counts;
     process.stdout.write(status);
     twitter.statuses("update", {
             status: status

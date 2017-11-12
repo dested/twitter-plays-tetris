@@ -77,5 +77,17 @@ export class Canvas {
         const mask = map[y % 4][x % 2];
         this.content[coord] |= mask;
     }
+    unset(x: number, y: number) {
+        if (!(x >= 0 && x < this.width && y >= 0 && y < this.height)) {
+            return;
+        }
+        x = Math.floor(x);
+        y = Math.floor(y);
+        const nx = Math.floor(x / 2);
+        const ny = Math.floor(y / 4);
+        const coord = nx + this.width / 2 * ny;
+        const mask = map[y % 4][x % 2];
+        this.content[coord] &= ~mask;
+    }
 }
 
